@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Movie Watch with Google Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-signin-client_id" content="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>🎬 Watch Movies with Google</h1>
+  </header>
+
+  <div id="login">
+    <div class="g-signin2" data-onsuccess="onSignIn"></div>
+  </div>
+
+  <div id="content" style="display:none;">
+    <h2>Welcome! Enjoy Your Movies</h2>
+    <div class="movie">
+      <h3>Movie from Google Drive</h3>
+      <iframe src="https://drive.google.com/file/d/DRIVE_FILE_ID/preview" 
+              width="640" height="480" allow="autoplay"></iframe>
+    </div>
+    <button onclick="signOut()">Sign Out</button>
+  </div>
+
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <script>
+    function onSignIn(googleUser) {
+      const profile = googleUser.getBasicProfile();
+      console.log("Signed in: " + profile.getName());
+      document.getElementById("login").style.display = "none";
+      document.getElementById("content").style.display = "block";
+    }
+
+    function signOut() {
+      const auth2 = gapi.auth2.getAuthInstance();
+      auth2.signOut().then(function () {
+        document.getElementById("login").style.display = "block";
+        document.getElementById("content").style.display = "none";
+      });
+    }
+  </script>
+</body>
+</html>

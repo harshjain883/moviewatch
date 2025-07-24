@@ -1,46 +1,510 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Movie Watch with Google Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="google-signin-client_id" content="477991573716-9n0ip9okhbnmdb12jcmf4uooo3q35d8k.apps.googleusercontent.com">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineSync - Watch Movies Together Online</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Video.js -->
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom CSS */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f0f13;
+            color: #e2e2e2;
+            overflow-x: hidden;
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #ff6b6b, #9775fa, #748ffc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .video-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .chat-messages {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .chat-bubble {
+            max-width: 80%;
+        }
+        .chat-container {
+            scrollbar-width: thin;
+            scrollbar-color: #4a5568 #2d3748;
+        }
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-container::-webkit-scrollbar-track {
+            background: #2d3748;
+        }
+        .chat-container::-webkit-scrollbar-thumb {
+            background-color: #4a5568;
+            border-radius: 6px;
+        }
+    </style>
 </head>
-<body>
-  <header>
-    <h1>🎬 Google Drive Movie Watch</h1>
-  </header>
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-black bg-opacity-90 backdrop-blur-sm fixed w-full z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <span class="text-xl font-bold gradient-text">CineSync</span>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-center space-x-4">
+                        <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                        <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Movies</a>
+                        <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Create Room</a>
+                        <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">About</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition">Sign In</button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-  <div id="login">
-    <div class="g-signin2" data-onsuccess="onSignIn"></div>
-  </div>
-
-  <div id="content" style="display:none;">
-    <h2>Welcome! Enjoy Your Movie</h2>
-    <div class="movie">
-      <h3>Google Drive Movie</h3>
-      <iframe src="https://drive.google.com/file/d/GOOGLE_DRIVE_FILE_ID/preview"
-              width="640" height="480" allow="autoplay"></iframe>
+    <!-- Hero Section -->
+    <div class="pt-20 pb-12 px-4 sm:px-6 lg:px-8 relative">
+        <div class="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-transparent -z-10"></div>
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6">
+                <span class="gradient-text">Watch Movies</span> <br> 
+                <span>Together Online</span>
+            </h1>
+            <p class="text-lg text-gray-300 max-w-3xl mx-auto mb-8">
+                Sync up with friends and loved ones to watch movies simultaneously. Enjoy shared reactions with real-time chat.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button id="createRoomBtn" class="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-plus"></i> Create Room
+                </button>
+                <div class="relative">
+                    <input type="text" id="roomCode" placeholder="Enter room code" class="bg-gray-800 text-white px-4 py-3 rounded-lg pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full">
+                    <button id="joinRoomBtn" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-md text-sm hover:bg-indigo-700 transition">
+                        Join
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-    <button onclick="signOut()">Sign Out</button>
-  </div>
 
-  <script src="https://apis.google.com/js/platform.js" async defer></script>
-  <script>
-    function onSignIn(googleUser) {
-      const profile = googleUser.getBasicProfile();
-      document.getElementById("login").style.display = "none";
-      document.getElementById("content").style.display = "block";
-    }
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id="roomSection" style="display: none;">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Video Player -->
+            <div class="flex-1">
+                <div class="video-container rounded-lg overflow-hidden shadow-2xl">
+                    <video id="moviePlayer" class="video-js vjs-big-play-centered" controls preload="auto" width="100%" height="auto">
+                        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+                        <p class="vjs-no-js">
+                            To view this video please enable JavaScript, or consider upgrading to a
+                            web browser that supports HTML5 video
+                        </p>
+                    </video>
+                </div>
+                
+                <div class="mt-4 bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xl font-semibold">Movie Details</h3>
+                        <div class="flex gap-2">
+                            <span class="inline-flex items-center gap-1 text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <span>4.8</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/36f0d060-e926-4918-a1a0-db9a3246a714.png" alt="Movie poster for Big Buck Bunny featuring cartoon animals in a forest setting" class="w-20 h-auto rounded" onerror="this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/781eda11-2322-4dc4-80b1-d6d29a3b4a59.png'">
+                        <div>
+                            <h2 class="text-2xl font-bold">Big Buck Bunny</h2>
+                            <p class="text-gray-300">2008 • Animation • 9m 56s</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">
+                        A large and lovable rabbit deals with three tiny bullies, led by a flying squirrel, who are determined to squelch his happiness. 
+                    </p>
+                </div>
+            </div>
 
-    function signOut() {
-      const auth2 = gapi.auth2.getAuthInstance();
-      auth2.signOut().then(function () {
-        document.getElementById("login").style.display = "block";
-        document.getElementById("content").style.display = "none";
-      });
-    }
-  </script>
+            <!-- Chat Section -->
+            <div class="lg:w-96 bg-gray-800 bg-opacity-50 rounded-lg p-4 flex flex-col" id="chatContainer">
+                <div class="border-b border-gray-700 pb-3 mb-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-semibold text-lg">Room Chat</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-green-500 text-green-900 font-bold px-2 py-0.5 rounded-full">3</span>
+                            <span class="text-sm text-gray-400">Online</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Room Code: <span id="currentRoomCode" class="font-mono text-indigo-300">XXXXXX</span></p>
+                </div>
+
+                <div class="chat-messages flex-1 overflow-y-auto mb-4 space-y-3" id="chatMessages">
+                    <!-- Messages will appear here -->
+                    <div class="chat-bubble bg-gray-700 rounded-lg p-3">
+                        <div class="flex items-center gap-2 mb-1">
+                            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/774cb804-67f5-4875-b3fd-8c8bd63875db.png" alt="User avatar for JaneDoe showing a smiling woman with brown hair" class="w-6 h-6 rounded-full" onerror="this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/bc1fedaa-bff3-4e10-8dac-663df830da81.png?text=JD'">
+                            <span class="font-semibold text-sm">JaneDoe</span>
+                            <span class="text-xs text-gray-400 ml-auto">2:34 PM</span>
+                        </div>
+                        <p class="text-sm">Has anyone seen this movie before?</p>
+                    </div>
+                    <div class="chat-bubble bg-gray-700 rounded-lg p-3">
+                        <div class="flex items-center gap-2 mb-1">
+                            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/a5631c21-2178-4490-a1c7-58cf93861467.png" alt="User avatar for FilmBuff42 showing a man with glasses in a movie theater" class="w-6 h-6 rounded-full" onerror="this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/4f44ea10-0d24-4366-8562-f13f832d63d9.png'">
+                            <span class="font-semibold text-sm">FilmBuff42</span>
+                            <span class="text-xs text-gray-400 ml-auto">2:35 PM</span>
+                        </div>
+                        <p class="text-sm">Yes! It's a classic animated short film from the Blender Institute.</p>
+                    </div>
+                </div>
+
+                <div class="mt-auto">
+                    <div class="relative">
+                        <textarea id="messageInput" class="w-full bg-gray-700 text-white rounded-lg px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" placeholder="Type your message..." rows="2"></textarea>
+                        <button id="sendMessageBtn" class="absolute right-2 bottom-3 bg-indigo-600 text-white p-1.5 rounded-md hover:bg-indigo-700 transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2 mt-2 text-gray-400 text-xs">
+                        <button class="hover:text-indigo-400 transition">
+                            <i class="fas fa-smile"></i>
+                        </button>
+                        <button class="hover:text-indigo-400 transition">
+                            <i class="fas fa-gift"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-gray-800 bg-opacity-50 p-6 rounded-lg hover:bg-opacity-70 transition">
+                <div class="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-user-plus text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Create or Join</h3>
+                <p class="text-gray-300">
+                    Create a new viewing room or join an existing one with a friend's invitation code.
+                </p>
+            </div>
+            <div class="bg-gray-800 bg-opacity-50 p-6 rounded-lg hover:bg-opacity-70 transition">
+                <div class="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-video text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Sync Up</h3>
+                <p class="text-gray-300">
+                    Our system keeps all viewers perfectly synchronized within milliseconds of each other.
+                </p>
+            </div>
+            <div class="bg-gray-800 bg-opacity-50 p-6 rounded-lg hover:bg-opacity-70 transition">
+                <div class="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-comments text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Share Reactions</h3>
+                <p class="text-gray-300">
+                    Chat with friends in real-time as you watch without disturbing the video playback.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gray-800 bg-opacity-30 rounded-3xl my-8">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-3xl font-bold mb-6">Premium Features</h2>
+                <ul class="space-y-5">
+                    <li class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold">Ultra-Low Latency</h3>
+                            <p class="text-gray-300 text-sm">Our synchronization tech ensures everyone is watching the same moment together.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-headphones"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold">Voice Channels</h3>
+                            <p class="text-gray-300 text-sm">Talk with friends during the movie with crystal clear audio.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-grin-stars"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold">Reaction Emojis</h3>
+                            <p class="text-gray-300 text-sm">Express yourself with fun emoji reactions that don't interrupt the chat.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="hidden lg:block">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/063a9349-28a3-4d00-b5a8-8d00e6be9700.png" alt="Group of friends watching a movie together on laptops and phones in a cozy living room setting with warm lighting" class="rounded-2xl shadow-xl" onerror="this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/8e3661d7-6963-4675-9ac9-dc6201da5fa6.png'">
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-black bg-opacity-70 py-12 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="border-b border-gray-800 pb-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">LOVEZMOVIE</h3>
+                    <p class="text-sm text-gray-400">
+                        Watch movies together, no matter how far apart you are.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Features</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Watch Parties</a></li>
+                        <li><a href="#" class="hover:text-white transition">Synchronized Playback</a></li>
+                        <li><a href="#" class="hover:text-white transition">Group Chat</a></li>
+                        <li><a href="#" class="hover:text-white transition">Voice Channels</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Legal</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-white transition">Cookie Policy</a></li>
+                        <li><a href="#" class="hover:text-white transition">DMCA</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Connect</h3>
+                    <div class="flex space-x-4 text-xl">
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-discord"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-youtube"></i></a>
+                    </div>
+                    <p class="text-xs mt-4 text-gray-600">
+                        © 2023 CineSync. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        // Initialize Video.js player
+        const player = videojs('moviePlayer', {
+            controls: true,
+            autoplay: false,
+            fluid: true,
+            playbackRates: [0.5, 1, 1.5, 2]
+        });
+
+        // Firebase Config - Replace with your Firebase project config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyDummyKeyDummyKeyDummy",
+            authDomain: "your-project.firebaseapp.com",
+            databaseURL: "https://your-project.firebaseio.com",
+            projectId: "your-project",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:dummyappid"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // DOM Elements
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        const joinRoomBtn = document.getElementById('joinRoomBtn');
+        const roomCodeInput = document.getElementById('roomCode');
+        const roomSection = document.getElementById('roomSection');
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const currentRoomCode = document.getElementById('currentRoomCode');
+
+        // Generate a random room code
+        function generateRoomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let result = '';
+            for (let i = 0; i < 6; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Create a new room
+        createRoomBtn.addEventListener('click', () => {
+            const roomCode = generateRoomCode();
+            currentRoomCode.textContent = roomCode;
+            roomSection.style.display = 'block';
+            
+            // Scroll to room section
+            roomSection.scrollIntoView({ behavior: 'smooth' });
+            
+            // Initialize room in Firebase
+            const roomRef = database.ref('rooms/' + roomCode);
+            roomRef.set({
+                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                timestamp: 0,
+                isPlaying: false
+            });
+            
+            // Set up real-time listeners
+            setupRoomListeners(roomRef);
+        });
+
+        // Join an existing room
+        joinRoomBtn.addEventListener('click', () => {
+            const roomCode = roomCodeInput.value.trim().toUpperCase();
+            if (roomCode.length !== 6) {
+                alert('Please enter a valid 6-character room code');
+                return;
+            }
+            
+            const roomRef = database.ref('rooms/' + roomCode);
+            roomRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    currentRoomCode.textContent = roomCode;
+                    roomSection.style.display = 'block';
+                    roomSection.scrollIntoView({ behavior: 'smooth' });
+                    setupRoomListeners(roomRef);
+                    
+                    // Set the video to match the room's current state
+                    const roomData = snapshot.val();
+                    player.src(roomData.videoUrl);
+                    if (roomData.isPlaying) {
+                        player.currentTime(roomData.timestamp);
+                        player.play();
+                    } else {
+                        player.currentTime(roomData.timestamp);
+                        player.pause();
+                    }
+                } else {
+                    alert('Room not found. Please check the code and try again.');
+                }
+            });
+        });
+
+        // Set up real-time room listeners (sync playback and chat)
+        function setupRoomListeners(roomRef) {
+            // Sync video playback
+            roomRef.child('timestamp').on('value', (snapshot) => {
+                const remoteTime = snapshot.val();
+                if (Math.abs(remoteTime - player.currentTime()) > 1) {
+                    player.currentTime(remoteTime);
+                }
+            });
+            
+            roomRef.child('isPlaying').on('value', (snapshot) => {
+                const isPlaying = snapshot.val();
+                if (isPlaying && player.paused()) {
+                    player.play();
+                } else if (!isPlaying && !player.paused()) {
+                    player.pause();
+                }
+            });
+            
+            // Sync chat messages
+            roomRef.child('chat').on('child_added', (snapshot) => {
+                const message = snapshot.val();
+                displayMessage(message);
+            });
+            
+            // Send player updates to room
+            player.on('timeupdate', () => {
+                if (player.seeking()) return;
+                roomRef.update({
+                    timestamp: player.currentTime()
+                });
+            });
+            
+            player.on('play', () => {
+                roomRef.update({
+                    isPlaying: true
+                });
+            });
+            
+            player.on('pause', () => {
+                roomRef.update({
+                    isPlaying: false
+                });
+            });
+        }
+
+        // Send a chat message
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message === '') return;
+            
+            const roomCode = currentRoomCode.textContent;
+            if (!roomCode) return;
+            
+            // In a real app, you would use actual user info from auth
+            const messageData = {
+                sender: 'You',
+                text: message,
+                timestamp: new Date().getTime()
+            };
+            
+            database.ref('rooms/' + roomCode + '/chat').push(messageData);
+            messageInput.value = '';
+        }
+
+        // Display a chat message
+        function displayMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-bubble bg-gray-700 rounded-lg p-3';
+            
+            const messageHTML = `
+                <div class="flex items-center gap-2 mb-1">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/01660022-585f-4a15-8513-a29df38f22e3.png" alt="User avatar for ${message.sender}" class="w-6 h-6 rounded-full" onerror="this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/87fb95e3-732d-4735-8a98-1f5c409f7483.png'">
+                    <span class="font-semibold text-sm">${message.sender}</span>
+                    <span class="text-xs text-gray-400 ml-auto">${new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+                <p class="text-sm">${message.text}</p>
+            `;
+            
+            messageElement.innerHTML = messageHTML;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Event listeners for chat
+        sendMessageBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
 </body>
 </html>
+
